@@ -1,98 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Extractor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .main-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-container {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .alert-container {
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="main-container">
-        <div class="header">
-            <h1>Audio Extractor</h1>
-            <p class="lead">Extract audio from video files with easy splitting options</p>
-        </div>
+{% extends "layout.html" %}
 
-        <div class="alert-container">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+{% block title %}Audio Extractor{% endblock %}
 
-            {% if not ffmpeg_installed %}
-                <div class="alert alert-danger" role="alert">
-                    <h4 class="alert-heading">FFmpeg Not Found!</h4>
-                    <p>FFmpeg is required for audio extraction. Please install FFmpeg and make sure it's in your system PATH.</p>
-                    <hr>
-                    <p class="mb-0">
-                        Installation instructions:
-                        <ul>
-                            <li>Download from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a></li>
-                            <li>Add the bin directory to your system PATH</li>
-                            <li>Restart the application</li>
-                        </ul>
-                    </p>
-                </div>
-            {% endif %}
-        </div>
+{% block header_subtitle %}Extract audio from video files with easy splitting options{% endblock %}
 
-        <div class="form-container">
-            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="video" class="form-label">Select Video File</label>
-                    <input class="form-control" type="file" id="video" name="video" accept=".mp4,.avi,.mkv,.mov,.wmv,.flv,.webm" {% if not ffmpeg_installed %}disabled{% endif %}>
-                    <div class="form-text">Supported formats: MP4, AVI, MKV, MOV, WMV, FLV, WebM</div>
-                </div>
+{% block additional_styles %}
+.form-container {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+{% endblock %}
 
-                <div class="mb-3">
-                    <label for="format" class="form-label">Output Format</label>
-                    <select class="form-select" id="format" name="format" {% if not ffmpeg_installed %}disabled{% endif %}>
-                        <option value="mp3" selected>MP3</option>
-                        <option value="wav">WAV</option>
-                        <option value="ogg">OGG</option>
-                        <option value="flac">FLAC</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="parts" class="form-label">Split into parts</label>
-                    <input type="number" class="form-control" id="parts" name="parts" min="1" max="100" value="1" {% if not ffmpeg_installed or not pydub_available %}disabled{% endif %}>
-                    <div class="form-text">Set to 1 for no splitting. {% if not pydub_available %}Splitting is not available without PyDub.{% endif %}</div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary" {% if not ffmpeg_installed %}disabled{% endif %}>Extract Audio</button>
-                </div>
-            </form>
-        </div>
+{% block alerts %}
+{% if not ffmpeg_installed %}
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">FFmpeg Not Found!</h4>
+        <p>FFmpeg is required for audio extraction. Please install FFmpeg and make sure it's in your system PATH.</p>
+        <hr>
+        <p class="mb-0">
+            Installation instructions:
+            <ul>
+                <li>Download from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a></li>
+                <li>Add the bin directory to your system PATH</li>
+                <li>Restart the application</li>
+            </ul>
+        </p>
     </div>
+{% endif %}
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html> 
+{% block content %}
+<div class="form-container">
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="video" class="form-label">Select Video File</label>
+            <input class="form-control" type="file" id="video" name="video" accept=".mp4,.avi,.mkv,.mov,.wmv,.flv,.webm" {% if not ffmpeg_installed %}disabled{% endif %}>
+            <div class="form-text">Supported formats: MP4, AVI, MKV, MOV, WMV, FLV, WebM</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="format" class="form-label">Output Format</label>
+            <select class="form-select" id="format" name="format" {% if not ffmpeg_installed %}disabled{% endif %}>
+                <option value="mp3" selected>MP3</option>
+                <option value="wav">WAV</option>
+                <option value="ogg">OGG</option>
+                <option value="flac">FLAC</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="parts" class="form-label">Split into parts</label>
+            <input type="number" class="form-control" id="parts" name="parts" min="1" max="100" value="1" {% if not ffmpeg_installed or not pydub_available %}disabled{% endif %}>
+            <div class="form-text">Set to 1 for no splitting. {% if not pydub_available %}Splitting is not available without PyDub.{% endif %}</div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" {% if not ffmpeg_installed %}disabled{% endif %}>Extract Audio</button>
+        </div>
+    </form>
+</div>
+{% endblock %} 

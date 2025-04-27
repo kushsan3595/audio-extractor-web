@@ -7,6 +7,7 @@ import math
 import threading
 import subprocess
 import time
+from datetime import datetime
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -24,6 +25,15 @@ app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB limit
 # Create necessary directories
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Add custom template filters
+@app.template_filter('current_year')
+def current_year_filter(text):
+    return datetime.now().year
+
+@app.template_filter('now')
+def now_filter(format_string):
+    return datetime.now().strftime(f'%{format_string}')
 
 # Check if FFmpeg is installed
 def is_ffmpeg_installed():
@@ -102,6 +112,10 @@ def index():
     return render_template('index.html', 
                           ffmpeg_installed=is_ffmpeg_installed(),
                           pydub_available=PYDUB_AVAILABLE)
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

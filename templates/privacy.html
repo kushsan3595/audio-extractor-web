@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block title %}Privacy Policy - Audio Extractor{% endblock %}
+
+{% block header_title %}Privacy Policy{% endblock %}
+{% block header_subtitle %}Learn how we collect and use your data{% endblock %}
+
+{% block additional_styles %}
+.privacy-container {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.privacy-container h2 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+.privacy-container h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.privacy-container ul {
+    margin-bottom: 20px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="privacy-container">
+    <p class="lead">Last updated: {{ ""|current_year }}-{% now 'm' %}-{% now 'd' %}</p>
+    
+    <p>Thank you for using Audio Extractor. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.</p>
+    
+    <h2>Information We Collect</h2>
+    
+    <h3>Personal Data</h3>
+    <p>We do not collect personally identifiable information unless you voluntarily provide it to us when you:</p>
+    <ul>
+        <li>Submit video files for audio extraction</li>
+        <li>Contact us through our website</li>
+    </ul>
+    
+    <h3>Non-Personal Data</h3>
+    <p>We may automatically collect certain non-personal information when you visit our website, including:</p>
+    <ul>
+        <li>Browser type</li>
+        <li>Operating system</li>
+        <li>IP address</li>
+        <li>Access times</li>
+        <li>Pages viewed</li>
+    </ul>
+    
+    <h2>How We Use Your Information</h2>
+    
+    <p>We may use the information we collect for various purposes, including to:</p>
+    <ul>
+        <li>Provide, operate, and maintain our website and services</li>
+        <li>Improve, personalize, and expand our website and services</li>
+        <li>Understand and analyze how you use our website</li>
+        <li>Develop new products, services, features, and functionality</li>
+        <li>Process user-submitted files for audio extraction</li>
+        <li>Respond to your comments, questions, and requests</li>
+    </ul>
+    
+    <h2>File Storage and Deletion</h2>
+    
+    <p>Files uploaded to our service:</p>
+    <ul>
+        <li>Are stored temporarily for processing only</li>
+        <li>Are automatically deleted after 24 hours</li>
+        <li>Are not shared with third parties</li>
+        <li>Are processed on secure servers</li>
+    </ul>
+    
+    <h2>Cookies and Tracking Technologies</h2>
+    
+    <p>We use cookies and similar tracking technologies to track activity on our website and store certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.</p>
+    
+    <h2>Google AdSense</h2>
+    
+    <p>We use Google AdSense to display advertisements on our website. Google AdSense may use cookies to personalize the advertisements you see and may collect information about your visit to our website. Google's ability to use and share information collected by Google AdSense is restricted by the Google AdSense Terms of Service and the Google Privacy Policy.</p>
+    
+    <h2>Third-Party Websites</h2>
+    
+    <p>Our website may contain links to third-party websites that are not owned or controlled by us. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party websites.</p>
+    
+    <h2>Data Security</h2>
+    
+    <p>We implement reasonable precautions to protect your information. However, no method of transmission over the internet or electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+    
+    <h2>Children's Privacy</h2>
+    
+    <p>Our website is not intended for use by children under the age of 13, and we do not knowingly collect personal information from children under 13.</p>
+    
+    <h2>Changes to This Privacy Policy</h2>
+    
+    <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date at the top of this page.</p>
+    
+    <h2>Contact Us</h2>
+    
+    <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+    <ul>
+        <li>Email: [Your Contact Email]</li>
+    </ul>
+</div>
+{% endblock %} 
