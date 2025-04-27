@@ -62,13 +62,55 @@ except ImportError:
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Generate silent audio for videos with no audio
+def create_silent_audio(duration, output_path, output_format):
+    """Create a silent audio file of the specified duration."""
+    if output_format == 'mp3':
+        # Create 1 second of silence and then repeat
+        if PYDUB_AVAILABLE:
+            silence = AudioSegment.silent(duration=1000)  # 1 second in ms
+            # Repeat to match duration (converting from seconds to ms)
+            silent_audio = silence * int(math.ceil(duration))
+            silent_audio.export(output_path, format=output_format)
+            return True
+    
+    # Fallback to ffmpeg directly
+    try:
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "lavfi", 
+            "-i", f"anullsrc=r=44100:cl=stereo",
+            "-t", str(duration),
+            output_path
+        ]
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except Exception as e:
+        print(f"Error creating silent audio: {str(e)}")
+        return False
+
 # Extract audio from video
 def extract_audio(video_path, output_path, output_format, num_parts):
     try:
         # Extract audio from video
         video = mp.VideoFileClip(video_path)
+        
+        # Check if video has audio
+        if video.audio is None:
+            # Handle case when video has no audio
+            full_output_path = os.path.join(output_path, f"extracted_audio.{output_format}")
+            
+            # Create silent audio with same duration as video
+            success = create_silent_audio(video.duration, full_output_path, output_format)
+            
+            if not success:
+                raise Exception("Failed to create silent audio for video without audio track")
+            
+            video.close()
+            return [full_output_path]
+        
+        # Normal case - video has audio
         audio = video.audio
-
         output_filename = os.path.splitext(os.path.basename(video_path))[0]
         
         # If not splitting
@@ -108,7 +150,15 @@ def extract_audio(video_path, output_path, output_format, num_parts):
             
             return output_files
     except Exception as e:
-        raise Exception(f"Error extracting audio: {str(e)}")
+        # Add more diagnostic information to the error
+        device_info = f"Error details: {str(e)}"
+        if hasattr(e, "__traceback__"):
+            import traceback
+            trace_info = ''.join(traceback.format_tb(e.__traceback__))
+            device_info += f"\nTrace: {trace_info}"
+        
+        print(f"Audio extraction error: {device_info}")
+        raise Exception(f"Could not extract audio: {str(e)}")
 
 @app.route('/')
 def index():
@@ -141,44 +191,66 @@ def upload_file():
         return redirect(request.url)
     
     if file and allowed_file(file.filename):
-        # Generate a secure filename with UUID to prevent collisions
-        original_filename = secure_filename(file.filename)
-        filename = f"{uuid.uuid4()}_{original_filename}"
-        
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        # Get form data
-        output_format = request.form.get('format', 'mp3')
-        num_parts = int(request.form.get('parts', 1))
-        
-        # Create a unique output directory for this job
-        job_id = str(uuid.uuid4())
-        output_path = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
-        os.makedirs(output_path, exist_ok=True)
-        
         try:
-            # Process the file
-            output_files = extract_audio(file_path, output_path, output_format, num_parts)
+            # Generate a secure filename with UUID to prevent collisions
+            original_filename = secure_filename(file.filename)
+            filename = f"{uuid.uuid4()}_{original_filename}"
             
-            # Store info in session
-            session['job_id'] = job_id
-            session['output_files'] = [os.path.basename(f) for f in output_files]
-            session['original_filename'] = os.path.splitext(original_filename)[0]
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
             
-            # Clean up the input file
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Log file information
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            print(f"Processing file: {original_filename} (Size: {file_size_mb:.2f}MB)")
+            
+            # Check if file is a valid video
+            try:
+                video = mp.VideoFileClip(file_path)
+                duration = video.duration
+                has_audio = video.audio is not None
+                video.close()
+                print(f"Video info: Duration={duration:.2f}s, Has audio={has_audio}")
+            except Exception as e:
+                flash(f"Invalid video file: {str(e)}")
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                return redirect(url_for('index'))
+            
+            # Get form data
+            output_format = request.form.get('format', 'mp3')
+            num_parts = int(request.form.get('parts', 1))
+            
+            # Create a unique output directory for this job
+            job_id = str(uuid.uuid4())
+            output_path = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
+            os.makedirs(output_path, exist_ok=True)
+            
+            try:
+                # Process the file
+                output_files = extract_audio(file_path, output_path, output_format, num_parts)
                 
-            return redirect(url_for('results'))
-        
+                # Store info in session
+                session['job_id'] = job_id
+                session['output_files'] = [os.path.basename(f) for f in output_files]
+                session['original_filename'] = os.path.splitext(original_filename)[0]
+                
+                # Clean up the input file
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    
+                return redirect(url_for('results'))
+            
+            except Exception as e:
+                error_msg = str(e)
+                print(f"Error during extraction: {error_msg}")
+                flash(f"Error processing file: {error_msg}")
+                # Clean up
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                return redirect(url_for('index'))
         except Exception as e:
-            flash(f"Error processing file: {str(e)}")
-            # Clean up
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            flash(f"Unexpected error: {str(e)}")
             return redirect(url_for('index'))
-    
     else:
         flash('Invalid file type. Please upload a video file (mp4, avi, mkv, etc.)')
         return redirect(url_for('index'))
