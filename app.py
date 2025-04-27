@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, url_for, redirect, flash, session
+from flask import Flask, render_template, request, send_from_directory, url_for, redirect, flash, session, send_file
 import os
 import uuid
 import moviepy.editor as mp
@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.secret_key = os.urandom(24)
 
 # Configure upload folder
@@ -25,6 +25,9 @@ app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB limit
 # Create necessary directories
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+os.makedirs('static/css', exist_ok=True)
+os.makedirs('static/js', exist_ok=True)
+os.makedirs('static/icons', exist_ok=True)
 
 # Add custom template filters
 @app.template_filter('current_year')
@@ -117,6 +120,14 @@ def index():
 def privacy():
     return render_template('privacy.html')
 
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('static', 'sw.js')
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'video' not in request.files:
@@ -155,6 +166,10 @@ def upload_file():
             session['output_files'] = [os.path.basename(f) for f in output_files]
             session['original_filename'] = os.path.splitext(original_filename)[0]
             
+            # Clean up the input file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
             return redirect(url_for('results'))
         
         except Exception as e:
@@ -186,7 +201,50 @@ def results():
 @app.route('/download/<job_id>/<filename>')
 def download(job_id, filename):
     output_path = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
-    return send_from_directory(output_path, filename, as_attachment=True)
+    return send_from_directory(output_path, filename, as_attachment=True, 
+                              mimetype='application/octet-stream')
+
+# Scheduled job to clean up old files (runs in background)
+def cleanup_old_files():
+    while True:
+        try:
+            # Sleep for 1 hour before each cleanup
+            time.sleep(3600)
+            
+            now = time.time()
+            # Clean output folders older than 24 hours
+            for job_id in os.listdir(app.config['OUTPUT_FOLDER']):
+                job_path = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
+                if os.path.isdir(job_path):
+                    created_time = os.path.getctime(job_path)
+                    if now - created_time > 24 * 3600:  # 24 hours
+                        for file in os.listdir(job_path):
+                            try:
+                                os.remove(os.path.join(job_path, file))
+                            except:
+                                pass
+                        try:
+                            os.rmdir(job_path)
+                        except:
+                            pass
+                            
+            # Clean uploads folder (anything older than 2 hours)
+            for file in os.listdir(app.config['UPLOAD_FOLDER']):
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
+                if os.path.isfile(file_path):
+                    created_time = os.path.getctime(file_path)
+                    if now - created_time > 2 * 3600:  # 2 hours
+                        try:
+                            os.remove(file_path)
+                        except:
+                            pass
+        except Exception as e:
+            print(f"Error in cleanup job: {str(e)}")
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    # Start cleanup thread
+    cleanup_thread = threading.Thread(target=cleanup_old_files, daemon=True)
+    cleanup_thread.start()
+    
+    # Start the Flask app
+    app.run(debug=True, threaded=True) 

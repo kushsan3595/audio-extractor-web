@@ -11,9 +11,35 @@
     border-radius: 10px;
     padding: 30px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
 }
 .download-list {
     margin-top: 20px;
+}
+.list-group-item {
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+}
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.download-badge {
+    white-space: nowrap;
+    margin-left: 8px;
+}
+@media (max-width: 768px) {
+    .results-container {
+        padding: 15px;
+    }
+    .list-group-item {
+        padding: 12px 10px;
+    }
+    h2 {
+        font-size: 1.4rem;
+    }
 }
 {% endblock %}
 
@@ -30,8 +56,8 @@
             {% for file in output_files %}
                 <a href="{{ url_for('download', job_id=job_id, filename=file) }}" 
                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                    {{ file }}
-                    <span class="badge bg-primary rounded-pill">
+                    <span class="file-name">{{ file }}</span>
+                    <span class="badge bg-primary rounded-pill download-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
                             <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                             <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
@@ -47,4 +73,21 @@
         <a href="{{ url_for('index') }}" class="btn btn-secondary">Convert Another File</a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Automatically trigger downloads on mobile if there's only one file
+    document.addEventListener('DOMContentLoaded', function() {
+        const downloadLinks = document.querySelectorAll('.list-group-item');
+        if (downloadLinks.length === 1 && window.innerWidth < 768) {
+            // Small delay to ensure the page is fully loaded
+            setTimeout(function() {
+                // Show a message to the user
+                alert('Download will start automatically. If it doesn\'t, tap the Download button.');
+                downloadLinks[0].click();
+            }, 1500);
+        }
+    });
+</script>
 {% endblock %} 

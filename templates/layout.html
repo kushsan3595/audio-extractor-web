@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Audio Extractor{% endblock %}</title>
+    
+    <!-- Favicon and PWA support -->
+    <link rel="icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
     
     <!-- Google AdSense Code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1051914947729251"
@@ -15,6 +24,7 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            width: 100%;
         }
         .header {
             text-align: center;
@@ -27,7 +37,36 @@
             margin: 20px 0;
             text-align: center;
             min-height: 250px;
+            overflow: hidden;
         }
+        .content {
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+            .form-container, .results-container, .privacy-container {
+                padding: 15px !important;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .lead {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Fix for mobile input fields */
+        input[type="file"],
+        input[type="number"],
+        select {
+            max-width: 100%;
+        }
+        
         {% block additional_styles %}{% endblock %}
     </style>
     
@@ -96,7 +135,29 @@
         </footer>
     </div>
 
+    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
+    
+    <!-- Mobile viewport fix -->
+    <script>
+        // Ensure proper scaling on mobile devices
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent zooming on form inputs in iOS
+            document.addEventListener('touchmove', function(event) {
+                if (event.scale !== 1) { event.preventDefault(); }
+            }, { passive: false });
+            
+            // Adjust viewport height for mobile browsers
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            window.addEventListener('resize', () => {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            });
+        });
+    </script>
 </body>
 </html> 

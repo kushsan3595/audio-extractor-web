@@ -11,6 +11,7 @@
     border-radius: 10px;
     padding: 30px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
 }
 .privacy-container h2 {
     margin-top: 30px;
@@ -22,6 +23,22 @@
 }
 .privacy-container ul {
     margin-bottom: 20px;
+    padding-left: 20px;
+}
+@media (max-width: 768px) {
+    .privacy-container {
+        padding: 15px;
+    }
+    .privacy-container h2 {
+        font-size: 1.4rem;
+        margin-top: 20px;
+    }
+    .privacy-container h3 {
+        font-size: 1.2rem;
+    }
+    .privacy-container p, .privacy-container li {
+        font-size: 0.9rem;
+    }
 }
 {% endblock %}
 
